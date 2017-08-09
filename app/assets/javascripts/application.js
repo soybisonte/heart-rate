@@ -12,5 +12,12 @@
 //
 //= require jquery
 //= require jquery_ujs
-//= require turbolinks
-//= require_tree .
+
+//= require libs/clmtrackr.min
+//= require libs/p5.min
+//= require libs/p5.dom.min
+//= require libs/p5.sound.min
+
+//= require modules/Signal
+//= require modules/MathHelpers
+//= require home

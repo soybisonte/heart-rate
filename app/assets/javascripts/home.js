@@ -1,61 +1,118 @@
-var linkOP='https://www.openprocessing.org/sketch/389855';
-console.log('example code taked from: ');
+let linkOP='https://github.com/soybisonte';
+console.log('BEAT: ');
 console.log('%c'+linkOP,'background:#ff0050; color:#FFF;');
 
+let inputVideo;
+let canvasVideo;
 
-var pathPoints = []
+let ctracker = new clm.tracker();
+let sqrRadius = 20;
+
+let videoSignal;
+let videoPixelsColors = [];
+
+
 function setup() {
-  createCanvas(500, 500);
+  createCanvas(2 * windowWidth/3, 2*windowHeight/3);
+  canvasVideo = createCapture(VIDEO);
+  let density = pixelDensity();
+  inputVideo = canvasVideo.elt;
+  canvasVideo.size(640, 480);
+  ctracker.init();
+  ctracker.start(inputVideo);
   background(0);
+
+  videoSignal = new Signal(ctracker,sqrRadius);
 }
 
 function draw() {
-  //create the path
-  pathPoints = circlePoints();
+  image(canvasVideo, 0, 0, 640, 480);
+  noStroke();
+  onMousePressed();
+}
 
-  for(var j=0;j<6;j++){
-	pathPoints = complexifyPath(pathPoints);
-  }
 
-  //draw the path
-  stroke(255,15);
-  for(var i=0;i<pathPoints.length -1;i++){
-    var v1 = pathPoints[i];
-    var v2 = pathPoints[i+1];
-    line(v1.x,v1.y,v2.x,v2.y);
+function onMousePressed(){
+  if(mouseIsPressed){
+      rectMode(CENTER);
+      let squarePosition = videoSignal.centerPosition();
+      fill(0,255,0);
+      rect(squarePosition.x, squarePosition.y ,sqrRadius, sqrRadius);
+      // carita(squarePosition.x,squarePosition.y);
+      // videoPixelsColors = getLuminanceOfPixels();
+      if(frameCount % 30 == 0){
+      videoPixelsColors = getGreenColorOfPixels();
+    }
+
+      let c = MathHelpers.calcAverage(videoPixelsColors);
+      // console.log(c);
+      fill(0,c,0);
+      rect(570, 410, 70, 70);
+      drawCurve(c);
   }
 }
 
-function complexifyPath(pathPoints){
-  //create a new path array from the old one by adding new points inbetween the old points
-  var newPath = [];
-
-  for(var i=0;i<pathPoints.length -1;i++){
-    var v1 = pathPoints[i];
-    var v2 = pathPoints[i+1];
-    var midPoint = p5.Vector.add(v1, v2).mult(0.5);
-    var distance =  v1.dist(v2);
-
-    //the new point is halfway between the old points, with some gaussian variation
-    var standardDeviation = 0.125*distance;
-    var v = createVector(randomGaussian(midPoint.x,standardDeviation),randomGaussian(midPoint.y,standardDeviation))
-   	append(newPath,v1);
-    append(newPath,v);
+function getLuminanceOfPixels(){
+  loadPixels();
+  let pixelLuminance = [];
+  let squareArea = videoSignal.pixelsOfSquare();
+  for (var i = 0; i < squareArea.length; i++) {
+    let currentPixelColor = get(squareArea[i].x ,squareArea[i].y);
+    let currentLuminance = currentPixelColor[0] * 0.229 +  currentPixelColor[1] * 0.587 + currentPixelColor[2] * 0.114;
+    pixelLuminance.push(currentLuminance);
   }
-
-  //don't forget the last point!
-  append(newPath,pathPoints[pathPoints.length-1]);
-  return newPath;
+  updatePixels();
+  return pixelLuminance;
 }
 
-function circlePoints() {
-  //two points somewhere on a circle
-  var r = width/2.1;
-  //var theta1 = random(TWO_PI);
-  var theta1 = randomGaussian(0,PI/4);
-  var theta2 = theta1 + randomGaussian(0,PI/3);
-  var v1 = createVector(width/2 + r*cos(theta1),width/2 + r*sin(theta1));
-  var v2 = createVector(width/2 + r*cos(theta2),width/2 + r*sin(theta2));
 
-  return [v1,v2];
+function getGreenColorOfPixels(){
+  loadPixels();
+  let pixelGreenColor=[];
+  let squareArea = videoSignal.pixelsOfSquare();
+  for (var i = 0; i < squareArea.length; i++) {
+    let currentPixelColor = get(squareArea[i].x ,squareArea[i].y);
+    pixelGreenColor.push(currentPixelColor[1]);
+  }
+  updatePixels();
+  return pixelGreenColor;
 }
+let counter=0;
+function drawCurve(brillo){
+  push();
+  translate(frameCount,410);
+  let brilloMapeado = map(135,155,-50,50);
+  // strokeWeight(1);
+  // stroke(255);
+  // point(0,brillo + 20);
+  if(frameCount % 3 == 0){
+    counter+=1;
+    // console.log('=======>', counter);
+    strokeWeight(2);
+    stroke(255,0,0);
+    point(0, brillo);
+  }
+  pop();
+}
+
+// function carita(x,y){
+//   fill(255);
+//   ellipse(x - 35, y + 35 ,sqrRadius+ 20, sqrRadius+ 20);
+//   ellipse(x + 35, y + 35 ,sqrRadius+ 20, sqrRadius+ 20);
+//   fill(0);
+//   ellipse(x - 35, y + 35 ,sqrRadius - 20, sqrRadius );
+//   ellipse(x + 35, y + 35 ,sqrRadius - 20, sqrRadius);
+// }
+
+/*get full rgb color
+function getColorsOfPixels(){
+  loadPixels();
+  let pixelColors=[];
+  let squareArea = videoSignal.pixelsOfSquare();
+  for (var i = 0; i < squareArea.length; i++) {
+    let currentPixelColor = get(squareArea[i].x ,squareArea[i].y);
+    pixelColors.push(currentPixelColor);
+  }
+  updatePixels();
+  return pixelColors;
+}*/
