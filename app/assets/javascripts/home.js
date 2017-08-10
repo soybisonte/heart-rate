@@ -11,6 +11,18 @@ let sqrRadius = 20;
 let videoSignal;
 let videoPixelsColors = [];
 
+let timeStamp = 0;
+let relativeTime = 0;
+let frameCounter = 0;
+
+let maxDataSamples =  256; // this number needs to be a power of two
+let dataSamples=[]; // array that contains dataSamples of brightness and time
+let brightData=[];
+
+const fft =  new FFTJS(maxDataSamples);
+let transformedData =[];
+let absBuffer=[];
+let toggle = false;
 
 function setup() {
   createCanvas(2 * windowWidth/3, 2*windowHeight/3);
@@ -21,98 +33,92 @@ function setup() {
   ctracker.init();
   ctracker.start(inputVideo);
   background(0);
-
   videoSignal = new Signal(ctracker,sqrRadius);
+
+  //complette complex array with bright
+
+
 }
 
 function draw() {
   image(canvasVideo, 0, 0, 640, 480);
+  rectMode(CENTER);
+  // filter(POSTERIZE,3);
   noStroke();
-  onMousePressed();
-}
-
-
-function onMousePressed(){
-  if(mouseIsPressed){
-      rectMode(CENTER);
-      let squarePosition = videoSignal.centerPosition();
-      fill(0,255,0);
-      rect(squarePosition.x, squarePosition.y ,sqrRadius, sqrRadius);
-      // carita(squarePosition.x,squarePosition.y);
-      // videoPixelsColors = getLuminanceOfPixels();
-      if(frameCount % 30 == 0){
-      videoPixelsColors = getGreenColorOfPixels();
-    }
-
-      let c = MathHelpers.calcAverage(videoPixelsColors);
-      // console.log(c);
-      fill(0,c,0);
-      rect(570, 410, 70, 70);
-      drawCurve(c);
+  if(toggle){
+    core();
   }
 }
 
-function getLuminanceOfPixels(){
+
+function keyPressed() {
+  if (keyCode === RIGHT_ARROW) {
+    toggle = true;
+    timeStamp = millis()/1000;
+  }
+  else if (keyCode === DOWN_ARROW) {
+    toggle = false;
+  }
+  else if (keyCode === LEFT_ARROW) {
+    clear();
+    background(0);
+    toggle = false;
+    // saveJSON(dataSamples,'data');
+  }
+}
+
+
+
+function core(){
+  relativeTime = millis()/1000 - timeStamp;
+  let squarePosition = videoSignal.centerPosition();
+  fill(0,255,0);
+  rect(squarePosition.x, squarePosition.y ,sqrRadius, sqrRadius);
+
+  let dataPixels = videoSignal.pixelsOfSquare();
+
   loadPixels();
-  let pixelLuminance = [];
-  let squareArea = videoSignal.pixelsOfSquare();
-  for (var i = 0; i < squareArea.length; i++) {
-    let currentPixelColor = get(squareArea[i].x ,squareArea[i].y);
-    let currentLuminance = currentPixelColor[0] * 0.229 +  currentPixelColor[1] * 0.587 + currentPixelColor[2] * 0.114;
-    pixelLuminance.push(currentLuminance);
-  }
+  // videoPixelsColors = PixelUtils.getLuminanceOfPixels(dataPixels);
+  videoPixelsColors = PixelUtils.getGreenColorOfPixels(dataPixels);
   updatePixels();
-  return pixelLuminance;
+
+  let brightness = MathHelpers.calcAverage(videoPixelsColors);
+  let mappedBright =  map(brightness, 100,210,0,1);
+  MathHelpers.BinaryDataBuilder(dataSamples,maxDataSamples,relativeTime ,'time', brightness,'brightness');
+  MathHelpers.dynamicArray(brightData,mappedBright,maxDataSamples);
+
+  /* transformeBrigthToFourierDomain
+  documentation on https://github.com/indutny/fft.js
+  */
+
+  if (brightData.length >= maxDataSamples) {
+    fft.realTransform(transformedData, brightData);
+    // console.log(transformedData);
+    absBuffer =  MathHelpers.magsOfBuffer(transformedData);
+    console.log(absBuffer);
+  }
+  /* transformeBrigthToFourierDomain */
+  fill(0,brightness,0);
+  rect(570, 410, 70, 70);
+
+  if (dataSamples.length > 0) {
+    graph(dataSamples[dataSamples.length-1].brightness,dataSamples[dataSamples.length-1].time);
+  }
+
 }
 
 
-function getGreenColorOfPixels(){
-  loadPixels();
-  let pixelGreenColor=[];
-  let squareArea = videoSignal.pixelsOfSquare();
-  for (var i = 0; i < squareArea.length; i++) {
-    let currentPixelColor = get(squareArea[i].x ,squareArea[i].y);
-    pixelGreenColor.push(currentPixelColor[1]);
-  }
-  updatePixels();
-  return pixelGreenColor;
-}
-let counter=0;
-function drawCurve(brillo){
+
+
+function graph(brillo,tiempo){
   push();
-  translate(frameCount,410);
-  let brilloMapeado = map(135,155,-50,50);
-  // strokeWeight(1);
-  // stroke(255);
-  // point(0,brillo + 20);
-  if(frameCount % 3 == 0){
-    counter+=1;
-    // console.log('=======>', counter);
-    strokeWeight(2);
+  translate(100,410);
+  if(frameCount % 15 == 0){
+    // frameCounter+=1;
+    strokeWeight(1);
     stroke(255,0,0);
-    point(0, brillo);
+    // point(tiempo*10, brillo);
+    line(tiempo * 10 ,480 - brillo * 2 ,tiempo*10 ,brillo);
   }
   pop();
 }
-
-// function carita(x,y){
-//   fill(255);
-//   ellipse(x - 35, y + 35 ,sqrRadius+ 20, sqrRadius+ 20);
-//   ellipse(x + 35, y + 35 ,sqrRadius+ 20, sqrRadius+ 20);
-//   fill(0);
-//   ellipse(x - 35, y + 35 ,sqrRadius - 20, sqrRadius );
-//   ellipse(x + 35, y + 35 ,sqrRadius - 20, sqrRadius);
-// }
-
-/*get full rgb color
-function getColorsOfPixels(){
-  loadPixels();
-  let pixelColors=[];
-  let squareArea = videoSignal.pixelsOfSquare();
-  for (var i = 0; i < squareArea.length; i++) {
-    let currentPixelColor = get(squareArea[i].x ,squareArea[i].y);
-    pixelColors.push(currentPixelColor);
-  }
-  updatePixels();
-  return pixelColors;
-}*/

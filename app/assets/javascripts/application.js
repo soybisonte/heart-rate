@@ -17,7 +17,12 @@
 //= require libs/p5.min
 //= require libs/p5.dom.min
 //= require libs/p5.sound.min
+//= require libs/fft
+
+
 
 //= require modules/Signal
+//= require modules/PixelUtils
 //= require modules/MathHelpers
+
 //= require home
