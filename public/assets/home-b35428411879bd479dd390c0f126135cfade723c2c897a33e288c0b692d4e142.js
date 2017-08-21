@@ -1,0 +1,1 @@
+define("home",["exports"],function(){console.log("BEAT: "),console.log("%chttps://github.com/soybisonte","background:#ff0050; color:#FFF;");var e=(undefined,undefined,new clm.tracker,undefined,128);new FFTJS(e)});

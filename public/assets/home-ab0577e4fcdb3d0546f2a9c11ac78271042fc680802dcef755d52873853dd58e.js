@@ -121,7 +121,7 @@ function core(){
   documentation on https://github.com/indutny/fft.js
   */
 
-  if (brightData.length >= maxDataSamples) {
+  if (brightData.length >= maxDataSamples && frameCounter % 15 == 0) {
 
     fft.realTransform(transformedData, brightData);
     absBuffer =  MathHelpers.magsOfBuffer(transformedData);
@@ -183,3 +183,4 @@ function graphicas(){
     graphLine(absBuffer[absBuffer.length-1]*150,relativeTime, green);
   }
 }
+;
