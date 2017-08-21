@@ -17,7 +17,9 @@
 //= require libs/p5.min
 //= require libs/p5.dom.min
 //= require libs/p5.sound.min
+//= require libs/p5.gibber.min
 //= require libs/fft
+//= require libs/dspFilters
 
 
 
@@ -26,3 +28,4 @@
 //= require modules/MathHelpers
 
 //= require home
+/*https://github.com/markert/fili.js/tree/master*/

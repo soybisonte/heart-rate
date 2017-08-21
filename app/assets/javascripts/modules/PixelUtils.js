@@ -22,6 +22,24 @@ class PixelUtils {
     }
     return pixelGreenColor;
   }
+  static getRedColorOfPixels(dataPixels){
+    let pixelRedColor=[];
+    let squareArea = dataPixels;
+    for (var i = 0; i < squareArea.length; i++) {
+      let currentPixelColor = get(squareArea[i].x ,squareArea[i].y);
+      pixelRedColor.push(currentPixelColor[0]);
+    }
+    return pixelRedColor;
+  }
+  static getBlueColorOfPixels(dataPixels){
+    let pixelBlueColor=[];
+    let squareArea = dataPixels;
+    for (var i = 0; i < squareArea.length; i++) {
+      let currentPixelColor = get(squareArea[i].x ,squareArea[i].y);
+      pixelBlueColor.push(currentPixelColor[2]);
+    }
+    return pixelBlueColor;
+  }
 
   static getLuminanceOfPixels(dataPixels){
     let pixelLuminance = [];

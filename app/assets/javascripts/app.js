@@ -23,13 +23,6 @@ const maxDataSamples =  128; // this number needs to be a power of two
 let dataSamples=[]; // array that contains dataSamples of brightness and time
 let brightData=[];
 
-const fft =  new FFTJS(maxDataSamples);
-let transformedData =[];
-let absBuffer=[];
-let freqs=[];
-
-let beatCount = 0;
-let hannWindowData=[];
 
 // for UI
 let toggle = false;
@@ -109,12 +102,12 @@ function core(){
   updatePixels();
 
   let brightness = MathHelpers.calcAverage(videoPixelsColors);
-  let mappedBright =  map(brightness, 100,150,0,1);
+  let mappedBright =  map(brightness, 0,150,0,100);
   // console.log(brightness,mappedBright);
 
-  MathHelpers.BinaryDataBuilder(dataSamples,maxDataSamples,relativeTime ,'time', mappedBright,'brightness');
-  MathHelpers.dynamicArray(brightData,mappedBright,maxDataSamples);
-  MathHelpers.smoothArray(brightData,0.3);
+  MathHelpers.BinaryDataBuilder(dataSamples,maxDataSamples,relativeTime ,'time', brightness,'brightness');
+  MathHelpers.dynamicArray(brightData,brightness,maxDataSamples);
+  MathHelpers.smoothArray(brightData,0.6);
   // console.log(brightData[brightData.length-1]);
 
   /* transformeBrigthToFourierDomain
@@ -122,27 +115,35 @@ function core(){
   */
 
   if (brightData.length >= maxDataSamples) {
+    var mean = MathHelpers.calcAverage(brightData);
+    var sdv = MathHelpers.standarDevation(brightData);
+    let threshold = 3.5;
+    let lastPoint = brightData[brightData.length-1];
+    let signal = 0;
+    let counter = 0;
 
-    fft.realTransform(transformedData, brightData);
-    absBuffer =  MathHelpers.magsOfBuffer(transformedData);
-    let mean =  MathHelpers.calcAverage(transformedData);
-    let blue = {r:0,g:125,b:255};
+    if (Math.abs(lastPoint - mean) > threshold * sdv) {
+      if (lastPoint > mean) {
+        signal = 1;
+        counter+= 1;
+      }
+      else{
+        signal = -1;
+        counter+= 1;
+      }
+    }
+    else{
+      signal = 0;
+    }
+    console.log(mean,brightData[brightData.length-1]);
+    graph(dataSamples[dataSamples.length-1].brightness, relativeTime, {r:0,g:255,b:0});
+    graph(brightData[brightData.length-1], relativeTime, {r:255,g:0,b:0});
+    graph(mean, relativeTime, {r:0,g:125,b:255});
+    graph(signal * 50, relativeTime, {r:0,g:125,b:255});
 
-
-    let peaks = MathHelpers.peakDetection(absBuffer);
-    graphLine(peaks,relativeTime, {r:255,g:125,b:0});
-    // absBuffer = MathHelpers.vectorMultiply(absBuffer,hannWindowData);
-    freqs = MathHelpers.idemArray(maxDataSamples);
-    freqs = MathHelpers.vectorScalarMultiply(freqs,60 * frameRate()/maxDataSamples);
-    // console.log(freqs);
-    // console.log(absBuffer);
-    // graphicas();
+    // console.log(brightData[brightData.length-1],signal);
   }
-  // fill(brightness,0,0);
-  // rect(570, 410, 70, 70);
-  // fill(0,brightData[0]*100,0);
-  // rect(70, 410, 70, 70);
-  /* transformeBrigthToFourierDomain */
+
 }
 
 
@@ -153,7 +154,7 @@ function graph(brillo,tiempo,color){
     // frameCounter+=1;
     strokeWeight(1);
     stroke(color.r,color.g,color.b);
-    point(tiempo*10, brillo);
+    point(tiempo*10,brillo);
     //line(tiempo * 10 ,480 - brillo * 2 ,tiempo*10 ,brillo);
   }
   pop();
@@ -170,16 +171,4 @@ function graphLine(data,tiempo,color){
     line(tiempo * 10 , -data ,tiempo*10 ,data);
   }
   pop();
-}
-
-
-function graphicas(){
-
-  let red = {r:255,g:0,b:0};
-  let green = {r:125,g:125,b:0};
-
-  if (dataSamples.length > 0) {
-    graph(dataSamples[dataSamples.length-1].brightness*150,relativeTime, red);
-    graphLine(absBuffer[absBuffer.length-1]*150,relativeTime, green);
-  }
 }
